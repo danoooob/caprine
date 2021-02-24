@@ -50,7 +50,7 @@ async function withMenu(
 async function withSettingsMenu(isNewDesign: boolean, callback: () => Promise<void> | void): Promise<void> {
 	// If ui is new, get the new settings menu
 	const settingsMenu = isNewDesign ?
-		(await elementReady<HTMLElement>('[aria-label="Settings, help and more"]', {stopOnDomReady: false}))! :
+		(await elementReady<HTMLElement>('.rq0escxv.l9j0dhe7.du4w35lb.j83agx80.cbu4d94t.pfnyh3mw.d2edcug0.hpfvmrgz.aovydwv3.p8cu3f6v.kb5gq1qc.taijpn5t.b0upgy8r .j83agx80.pfnyh3mw .ozuftl9m [role=button]', {stopOnDomReady: false}))! :
 		(await elementReady<HTMLElement>('._30yy._6ymd._2agf,._30yy._2fug._p', {stopOnDomReady: false}))!;
 
 	await withMenu(isNewDesign, settingsMenu, callback);
@@ -106,7 +106,7 @@ ipc.answerMain('show-preferences', async () => {
 
 ipc.answerMain('new-conversation', async () => {
 	if (await isNewDesign()) {
-		document.querySelector<HTMLElement>('[aria-label="New Message"]')!.click();
+		document.querySelector<HTMLElement>('[href="/new/"]')!.click();
 	} else {
 		document.querySelector<HTMLElement>('._30yy[data-href$="/new"]')!.click();
 	}
@@ -150,8 +150,49 @@ ipc.answerMain('find', () => {
 	searchBox!.focus();
 });
 
-ipc.answerMain('search', () => {
-	document.querySelector<HTMLElement>('._3szo:nth-of-type(1)')!.click();
+async function openSearchInConversation() {
+	const mainView = document.querySelector('.rq0escxv.l9j0dhe7.du4w35lb.j83agx80.g5gj957u.rj1gh0hx.buofh1pr.hpfvmrgz.i1fnvgqd.gs1a9yip.owycx6da.btwxx1t3.jb3vyjys.nwf6jgls')!;
+	const rightSidebarIsClosed = Boolean(mainView.querySelector<HTMLElement>('div:only-child'));
+
+	if (rightSidebarIsClosed) {
+		document.documentElement.classList.add('hide-r-sidebar');
+		document.querySelector<HTMLElement>('[aria-label="Conversation Information"]')?.click();
+	}
+
+	await elementReady<HTMLElement>(selectors.rightSidebarButtons, {stopOnDomReady: false});
+	const buttonList = document.querySelectorAll<HTMLElement>(selectors.rightSidebarButtons);
+	console.log(buttonList);
+
+	if (buttonList.length > 4) {
+		buttonList[4].click();
+	}
+
+	// If right sidebar was closed when shortcut was clicked, then close it back.
+	if (rightSidebarIsClosed) {
+		document.querySelector<HTMLElement>('[aria-label="Conversation Information"]')?.click();
+
+		// Observe sidebar so when it's hidden, remove the utility class. This prevents split
+		// display of sidebar.
+		const sidebarObserver = new MutationObserver(records => {
+			const removedRecords = records.filter(({removedNodes}) => removedNodes.length > 0 && (removedNodes[0] as HTMLElement).tagName === 'DIV');
+
+			// In case there is a div removed, hide utility class and stop observing
+			if (removedRecords.length > 0) {
+				document.documentElement.classList.remove('hide-r-sidebar');
+				sidebarObserver.disconnect();
+			}
+		});
+
+		sidebarObserver.observe(mainView, {childList: true, subtree: true});
+	}
+}
+
+ipc.answerMain('search', (isNewDesign: boolean) => {
+	if (isNewDesign) {
+		openSearchInConversation();
+	} else {
+		document.querySelector<HTMLElement>('._3szo:nth-of-type(1)')!.click();
+	}
 });
 
 ipc.answerMain('insert-gif', () => {
@@ -163,7 +204,7 @@ ipc.answerMain('insert-gif', () => {
 			element.querySelector<HTMLElement>('svg path[d^="M27.002,13.5"]')
 		) ??
 		// Newest UI
-		document.querySelector<HTMLElement>('[aria-label="Choose a gif"][aria-hidden=false]');
+		document.querySelector<HTMLElement>('.tkr6xdv7 .pmk7jnqg.kkf49tns.cgat1ltu.sw24d88r.i09qtzwb.g3zh7qmp.flx89l3n.mb8dcdod.chkx7lpg [aria-hidden=false]');
 
 	gifElement!.click();
 });
@@ -171,7 +212,7 @@ ipc.answerMain('insert-gif', () => {
 ipc.answerMain('insert-emoji', async () => {
 	const newDesign = await isNewDesign();
 	const emojiElement = newDesign ?
-		document.querySelector<HTMLElement>('[aria-label="Choose an emoji"]') :
+		document.querySelector<HTMLElement>('.cxmmr5t8 .tojvnm2t.a6sixzi8.abs2jz4q.a8s20v7p.t1p8iaqh.k5wvi7nf.q3lfd5jv.pk4s997a.bipmatt0.cebpdrjk.qowsmv63.owwhemhu.dp1hu0rb.dhp61c6y.iyyx5f41 [role=button]') :
 		(await elementReady<HTMLElement>('._5s2p, ._30yy._7odb', {
 			stopOnDomReady: false
 		}));
@@ -188,7 +229,7 @@ ipc.answerMain('insert-sticker', () => {
 			element.querySelector<HTMLElement>('svg path[d^="M22.5,18.5 L27.998,18.5"]')
 		) ??
 		// Newest UI
-		document.querySelector<HTMLElement>('[aria-label="Choose a sticker"][aria-hidden=false]');
+		document.querySelector<HTMLElement>('.tkr6xdv7 .pmk7jnqg.kkf49tns.cgat1ltu.sw24d88r.i09qtzwb.g3zh7qmp.flx89l3n.mb8dcdod.tntlmw5q [aria-hidden=false]');
 
 	stickerElement!.click();
 });
@@ -198,7 +239,7 @@ ipc.answerMain('attach-files', () => {
 		// Old UI
 		document.querySelector<HTMLElement>('._5vn8 + input[type="file"], ._7oam input[type="file"]') ??
 		// Newest UI
-		document.querySelector<HTMLElement>('[aria-label="Attach a photo or video"][aria-hidden=false]');
+		document.querySelector<HTMLElement>('.tkr6xdv7 .pmk7jnqg.kkf49tns.cgat1ltu.sw24d88r.i09qtzwb.g3zh7qmp.flx89l3n.mb8dcdod.lbhrjshz [aria-hidden=false]');
 
 	filesElement!.click();
 });
@@ -238,6 +279,8 @@ ipc.answerMain('hide-conversation', async ({isNewDesign}: INewDesign) => {
 
 async function openHiddenPreferences(isNewDesign: boolean): Promise<boolean> {
 	if (!isPreferencesOpen(isNewDesign)) {
+		document.documentElement.classList.add('hide-preferences-window');
+
 		const style = document.createElement('style');
 		// Hide both the backdrop and the preferences dialog
 		style.textContent = `${preferencesSelector} ._3ixn, ${preferencesSelector} ._59s7 { opacity: 0 !important }`;
@@ -245,8 +288,10 @@ async function openHiddenPreferences(isNewDesign: boolean): Promise<boolean> {
 
 		await openPreferences(isNewDesign);
 
-		// Will clean up itself after the preferences are closed
-		document.querySelector<HTMLElement>(preferencesSelector)!.append(style);
+		if (!isNewDesign) {
+			// Will clean up itself after the preferences are closed
+			document.querySelector<HTMLElement>(preferencesSelector)!.append(style);
+		}
 
 		return true;
 	}
@@ -276,20 +321,22 @@ ipc.answerMain('toggle-mute-notifications', async ({isNewDesign, defaultStatus}:
 		selectors.notificationCheckbox
 	)!;
 
-	if (defaultStatus === undefined) {
-		notificationCheckbox.click();
-	} else if (
-		(defaultStatus && notificationCheckbox.checked) ||
-		(!defaultStatus && !notificationCheckbox.checked)
-	) {
-		notificationCheckbox.click();
+	if (!isNewDesign) {
+		if (defaultStatus === undefined) {
+			notificationCheckbox.click();
+		} else if (
+			(defaultStatus && notificationCheckbox.checked) ||
+			(!defaultStatus && !notificationCheckbox.checked)
+		) {
+			notificationCheckbox.click();
+		}
 	}
 
 	if (shouldClosePreferences) {
 		closePreferences(isNewDesign);
 	}
 
-	return !notificationCheckbox.checked;
+	return !isNewDesign && !notificationCheckbox.checked;
 });
 
 ipc.answerMain('toggle-message-buttons', () => {
@@ -383,13 +430,15 @@ function updateSidebar(): void {
 
 async function updateDoNotDisturb(isNewDesign: boolean): Promise<void> {
 	const shouldClosePreferences = await openHiddenPreferences(isNewDesign);
-	const soundsCheckbox = document.querySelector<HTMLInputElement>(messengerSoundsSelector)!;
+
+	if (!isNewDesign) {
+		const soundsCheckbox = document.querySelector<HTMLInputElement>(messengerSoundsSelector)!;
+		toggleSounds(await ipc.callMain('update-dnd-mode', soundsCheckbox.checked));
+	}
 
 	if (shouldClosePreferences) {
 		closePreferences(isNewDesign);
 	}
-
-	toggleSounds(await ipc.callMain('update-dnd-mode', soundsCheckbox.checked));
 }
 
 function renderOverlayIcon(messageCount: number): HTMLCanvasElement {
@@ -616,7 +665,22 @@ function isPreferencesOpen(isNewDesign: boolean): boolean {
 function closePreferences(isNewDesign: boolean): void {
 	if (isNewDesign) {
 		const closeButton = document.querySelector<HTMLElement>('[aria-label=Preferences] [aria-label=Close]')!;
-		return closeButton.click();
+		closeButton.click();
+
+		// Wait for the preferences window to be closed, then remove the class from the document
+		const preferencesOverlayObserver = new MutationObserver(records => {
+			const removedRecords = records.filter(({removedNodes}) => removedNodes.length > 0 && (removedNodes[0] as HTMLElement).tagName === 'DIV');
+
+			// In case there is a div removed, hide utility class and stop observing
+			if (removedRecords.length > 0) {
+				document.documentElement.classList.remove('hide-preferences-window');
+				preferencesOverlayObserver.disconnect();
+			}
+		});
+
+		const preferencesOverlay = document.querySelector('[data-pagelet=root] > div > div:last-child')!;
+
+		return preferencesOverlayObserver.observe(preferencesOverlay, {childList: true, subtree: true});
 	}
 
 	const doneButton = document.querySelector<HTMLElement>('._3quh._30yy._2t_._5ixy')!;
