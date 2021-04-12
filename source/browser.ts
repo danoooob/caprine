@@ -8,7 +8,7 @@ import {sendConversationList} from './browser/conversation-list';
 import {INewDesign, IToggleMuteNotifications, IToggleSounds} from './types';
 
 const selectedConversationSelector = '._5l-3._1ht1._1ht2';
-const selectedConversationNewDesign = '[role=navigation] [role=grid] [role=row] [role=link] > div:only-child';
+const selectedConversationNewDesign = '[role=navigation] [role=grid] [role=row] [role=gridcell] [role=link][aria-current]';
 const preferencesSelector = '._10._4ebx.uiLayer._4-hy';
 const preferencesSelectorNewDesign = '[aria-label=Preferences]';
 const messengerSoundsSelector = `${preferencesSelector} ._374d ._6bkz`;
@@ -597,7 +597,7 @@ function selectedConversationIndex(isNewDesign: boolean, offset = 0): number {
 	}
 
 	const newSelected = isNewDesign ?
-		selected.parentNode!.parentNode!.parentNode!.parentNode!.parentNode! as HTMLElement :
+		selected.parentNode!.parentNode!.parentNode! as HTMLElement :
 		selected;
 
 	const list = [...newSelected.parentNode!.children];
@@ -682,7 +682,7 @@ function isPreferencesOpen(isNewDesign: boolean): boolean {
 
 async function closePreferences(isNewDesign: boolean): Promise<void> {
 	if (isNewDesign) {
-		const closeButton = await elementReady<HTMLElement>('[aria-label=Preferences] [aria-label=Close]', {stopOnDomReady: false});
+		const closeButton = await elementReady<HTMLElement>(selectors.closePreferencesButton, {stopOnDomReady: false});
 		closeButton?.click();
 
 		// Wait for the preferences window to be closed, then remove the class from the document
